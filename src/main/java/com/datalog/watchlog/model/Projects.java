@@ -24,7 +24,7 @@ public class Projects {
     @Column(name = "project_id")
     private UUID projectId;
 
-    @Column(name = "project_name" , nullable = false)
+    @Column(name = "project_name", nullable = false, unique = true)
     private String projectName;
 
     @Column(name = "project_description", nullable = false)

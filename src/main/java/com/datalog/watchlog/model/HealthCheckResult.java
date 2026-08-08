@@ -3,7 +3,6 @@ package com.datalog.watchlog.model;
 
 import com.datalog.watchlog.model.enums.ServiceStatus;
 import jakarta.persistence.*;
-import jdk.jfr.Timespan;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

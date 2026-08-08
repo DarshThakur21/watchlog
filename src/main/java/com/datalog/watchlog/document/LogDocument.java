@@ -2,7 +2,7 @@ package com.datalog.watchlog.document;
 
 
 import com.datalog.watchlog.model.enums.LogLevel;
-import jakarta.persistence.Id;
+import org.springframework.data.annotation.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

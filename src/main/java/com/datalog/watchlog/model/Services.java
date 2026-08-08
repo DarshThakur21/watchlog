@@ -16,10 +16,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "services",indexes = {
-        @Index(name = "idx_service_id", columnList = "service_id"),
-        @Index(name = "idx_project_id", columnList = "project_id")
-})
+@Table(name = "services",
+        uniqueConstraints = @UniqueConstraint(name = "uq_service_project_name", columnNames = {"project_id", "service_name"}),
+        indexes = {
+                @Index(name = "idx_service_id", columnList = "service_id"),
+                @Index(name = "idx_project_id", columnList = "project_id")
+        })
 public class Services {
 
     @Id
@@ -46,5 +48,12 @@ public class Services {
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Projects project;
+
+    @PrePersist
+    void generateApiKey() {
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = UUID.randomUUID().toString();
+        }
+    }
 
 }
