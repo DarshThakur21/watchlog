@@ -5,8 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Request body for creating a {@code Project}.
  *
- * @param name unique display name of the project
+ * @param projectName        unique display name of the project
+ * @param projectDescription optional description (stored as empty string if omitted)
  */
 public record ProjectRequest(
-        @NotBlank(message = "name is required") String name) {
+        @NotBlank(message = "projectName is required") String projectName,
+        String projectDescription) {
 }

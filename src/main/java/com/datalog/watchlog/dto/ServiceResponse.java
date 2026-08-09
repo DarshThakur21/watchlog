@@ -9,7 +9,7 @@ import java.util.UUID;
  *
  * @param id                  generated database id
  * @param projectId           id of the owning project
- * @param name                display name of the service
+ * @param serviceName         display name of the service
  * @param baseUrl             base URL used by the health poller
  * @param healthCheckEndpoint relative health-check path
  * @param createdAt           creation timestamp
@@ -17,7 +17,7 @@ import java.util.UUID;
 public record ServiceResponse(
         UUID id,
         UUID projectId,
-        String name,
+        String serviceName,
         String baseUrl,
         String healthCheckEndpoint,
         Instant createdAt) {
