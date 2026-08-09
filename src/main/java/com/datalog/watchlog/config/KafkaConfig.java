@@ -1,6 +1,9 @@
 package com.datalog.watchlog.config;
 
 import com.datalog.watchlog.event.LogEventMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -23,8 +26,12 @@ import java.util.Map;
 
 /**
  * Kafka wiring for the log pipeline: topic definition plus JSON-serialized
- * producer/consumer. Configured in code so {@code application.properties} only
- * needs to set {@code spring.kafka.bootstrap-servers}.
+ * producer/consumer.
+ *
+ * <p>Both serializers use a dedicated {@link ObjectMapper} with
+ * {@link JavaTimeModule} registered (and ISO-8601 dates). spring-kafka's
+ * {@code JsonSerializer} would otherwise fall back to a bare mapper that cannot
+ * handle {@code java.time.Instant} fields like {@code LogEventMessage.timestamp}.
  */
 @Configuration
 public class KafkaConfig {
@@ -34,8 +41,6 @@ public class KafkaConfig {
 
     /** Consumer group of the log indexer. */
     public static final String LOG_INDEXER_GROUP = "log-indexer";
-
-    private static final String TRUSTED_PACKAGES = "com.datalog.watchlog.event";
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9000}")
     private String bootstrapServers;
@@ -49,14 +54,14 @@ public class KafkaConfig {
     public ProducerFactory<String, LogEventMessage> producerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(props);
+        JsonSerializer<LogEventMessage> serializer = new JsonSerializer<>(kafkaObjectMapper());
+        return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), serializer);
     }
 
     @Bean
-    public KafkaTemplate<String, LogEventMessage> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public KafkaTemplate<String, LogEventMessage> kafkaTemplate(
+            ProducerFactory<String, LogEventMessage> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
     }
 
     @Bean
@@ -65,13 +70,9 @@ public class KafkaConfig {
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, LOG_INDEXER_GROUP);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, TRUSTED_PACKAGES);
-        return new DefaultKafkaConsumerFactory<>(
-                props,
-                new StringDeserializer(),
-                new JsonDeserializer<>(LogEventMessage.class, false));
+        JsonDeserializer<LogEventMessage> deserializer =
+                new JsonDeserializer<>(LogEventMessage.class, kafkaObjectMapper(), false);
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
 
     @Bean
@@ -81,5 +82,16 @@ public class KafkaConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         return factory;
+    }
+
+    /**
+     * Mapper with jsr310 support, independent of Spring Boot's auto-configured one,
+     * so Kafka serialization never depends on web-layer configuration.
+     */
+    private static ObjectMapper kafkaObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 }
