@@ -8,11 +8,11 @@ Backend completion phase: health polling, metrics sampling, and the full Project
 
 **Goal:** periodically probe every registered service's health endpoint, record the result, and expose current status for the dashboard.
 
-| File | Type | What it does |
-|---|---|---|
-| `WatchlogApplication` | modified | Added `@EnableScheduling` to activate the `@Scheduled` pollers |
-| `service/HealthCheckService` | new | Polls every 30s (`@Scheduled(fixedDelay = 30_000)`): calls `baseUrl + healthCheckEndpoint` via a `RestClient` with **3s connect/read timeouts** (a hanging endpoint can't block the scheduler). 2xx → `UP`, anything else / exception → `DOWN`. Saves a `HealthCheckResult`. `currentStatus()` returns the latest result per service (`UNKNOWN` if never checked). |
-| `controller/HealthController` | new | `GET /api/health` → `List<HealthStatusResponse>` |
+| File                          | Type     | What it does                                                                                                                                                                                                                                                                                                                                                       |
+|-------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WatchlogApplication`         | modified | Added `@EnableScheduling` to activate the `@Scheduled` pollers                                                                                                                                                                                                                                                                                                     |
+| `service/HealthCheckService`  | new      | Polls every 30s (`@Scheduled(fixedDelay = 30_000)`): calls `baseUrl + healthCheckEndpoint` via a `RestClient` with **3s connect/read timeouts** (a hanging endpoint can't block the scheduler). 2xx → `UP`, anything else / exception → `DOWN`. Saves a `HealthCheckResult`. `currentStatus()` returns the latest result per service (`UNKNOWN` if never checked). |
+| `controller/HealthController` | new      | `GET /api/health` → `List<HealthStatusResponse>`                                                                                                                                                                                                                                                                                                                   |
 
 **Response shape (`HealthStatusResponse`):** `serviceId (UUID), status (UP/DOWN/UNKNOWN), lastCheckedAt (Instant), responseTimeMs (Long)`.
 
@@ -22,11 +22,11 @@ Backend completion phase: health polling, metrics sampling, and the full Project
 
 **Goal:** sample metrics into the TimescaleDB hypertable and expose bucketed time-series for charts.
 
-| File | Type | What it does |
-|---|---|---|
-| `service/MetricPointPoller` | new | Every 15s (`@Scheduled(fixedDelay = 15_000)`), writes synthetic `cpu_usage` + `memory_usage_mb` `MetricPoint` rows per service. Values are placeholders — swap for a real scrape (Micrometer/Prometheus) later. |
-| `service/MetricQueryService` | new | Read side: defaults `from` = last hour, `bucket` = `1 minute`; runs the TimescaleDB `time_bucket()` native query (`MetricPointRepository.findBucketed`), maps each row `{bucket, avg(value)}` → `MetricQueryResponse.Point(Instant, Double)`. |
-| `controller/MetricController` | new | `GET /api/metrics?serviceId=&metricName=&from=&to=&bucket=` → `MetricQueryResponse` |
+| File                          | Type | What it does                                                                                                                                                                                                                                  |
+|-------------------------------|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `service/MetricPointPoller`   | new  | Every 15s (`@Scheduled(fixedDelay = 15_000)`), writes synthetic `cpu_usage` + `memory_usage_mb` `MetricPoint` rows per service. Values are placeholders — swap for a real scrape (Micrometer/Prometheus) later.                               |
+| `service/MetricQueryService`  | new  | Read side: defaults `from` = last hour, `bucket` = `1 minute`; runs the TimescaleDB `time_bucket()` native query (`MetricPointRepository.findBucketed`), maps each row `{bucket, avg(value)}` → `MetricQueryResponse.Point(Instant, Double)`. |
+| `controller/MetricController` | new  | `GET /api/metrics?serviceId=&metricName=&from=&to=&bucket=` → `MetricQueryResponse`                                                                                                                                                           |
 
 **Depends on Step 2:** the `metric_points` table must be a hypertable for `time_bucket()` to work:
 ```sql
@@ -43,20 +43,20 @@ SELECT create_hypertable('metric_points', 'timestamp');
 **Goal:** full registration API with the rule *entities never cross the API boundary — always map `Entity → Response DTO`*, and `apiKey` is never echoed back.
 
 ### DTOs realigned to the entities
-| DTO | Change |
-|---|---|
-| `ProjectRequest` | `name` → `projectName` (+ optional `projectDescription`; stored as `""` if omitted) |
-| `ProjectResponse` | now `id, projectName, projectDescription, createdAt` (all `UUID`/`Instant`) |
-| `ServiceRequest` | `name` → `serviceName` |
+| DTO               | Change                                                                                      |
+|-------------------|---------------------------------------------------------------------------------------------|
+| `ProjectRequest`  | `name` → `projectName` (+ optional `projectDescription`; stored as `""` if omitted)         |
+| `ProjectResponse` | now `id, projectName, projectDescription, createdAt` (all `UUID`/`Instant`)                 |
+| `ServiceRequest`  | `name` → `serviceName`                                                                      |
 | `ServiceResponse` | now `id, projectId, serviceName, baseUrl, healthCheckEndpoint, createdAt` — **no `apiKey`** |
 
 ### Services & controllers
-| File | Type | What it does |
-|---|---|---|
-| `service/ProjectService` | new | `create` (409 on duplicate `projectName`), `list`, `get` (404 if missing). Maps `Projects → ProjectResponse`. |
-| `service/ServicesService` | new | `create` (404 if project missing, 409 on duplicate `serviceName` within project; `apiKey` auto-generated by `@PrePersist` when omitted), `listAll`/`listByProject`, `get`. Maps `Services → ServiceResponse`. |
-| `controller/ProjectController` | new | `POST /api/projects` (201), `GET /api/projects`, `GET /api/projects/{id}` |
-| `controller/ServicesController` | new | `POST /api/services` (201), `GET /api/services?projectId=` (optional filter), `GET /api/services/{id}` |
+| File                            | Type | What it does                                                                                                                                                                                                  |
+|---------------------------------|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `service/ProjectService`        | new  | `create` (409 on duplicate `projectName`), `list`, `get` (404 if missing). Maps `Projects → ProjectResponse`.                                                                                                 |
+| `service/ServicesService`       | new  | `create` (404 if project missing, 409 on duplicate `serviceName` within project; `apiKey` auto-generated by `@PrePersist` when omitted), `listAll`/`listByProject`, `get`. Maps `Services → ServiceResponse`. |
+| `controller/ProjectController`  | new  | `POST /api/projects` (201), `GET /api/projects`, `GET /api/projects/{id}`                                                                                                                                     |
+| `controller/ServicesController` | new  | `POST /api/services` (201), `GET /api/services?projectId=` (optional filter), `GET /api/services/{id}`                                                                                                        |
 
 **Status codes:** `201` create, `400` validation, `404` missing project/service, `409` uniqueness conflict.
 
@@ -114,15 +114,15 @@ SELECT create_hypertable('metric_points', 'timestamp');
 
 ## Resulting API surface (at the end of Step 11)
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| POST | `/api/projects` | create project |
-| GET | `/api/projects` / `/api/projects/{id}` | list / get project |
-| POST | `/api/services` | create service |
-| GET | `/api/services` (`?projectId=`) / `/api/services/{id}` | list / get service |
-| POST | `/api/logs` | ingest log (→ Kafka → ES), 202 |
-| GET | `/api/logs` | search logs (serviceId/level/from/to/keyword/page/size) |
-| GET | `/api/health` | current health of all services |
-| GET | `/api/metrics` | bucketed metric time-series |
+| Method | Endpoint                                               | Purpose                                                 |
+|--------|--------------------------------------------------------|---------------------------------------------------------|
+| POST   | `/api/projects`                                        | create project                                          |
+| GET    | `/api/projects` / `/api/projects/{id}`                 | list / get project                                      |
+| POST   | `/api/services`                                        | create service                                          |
+| GET    | `/api/services` (`?projectId=`) / `/api/services/{id}` | list / get service                                      |
+| POST   | `/api/logs`                                            | ingest log (→ Kafka → ES), 202                          |
+| GET    | `/api/logs`                                            | search logs (serviceId/level/from/to/keyword/page/size) |
+| GET    | `/api/health`                                          | current health of all services                          |
+| GET    | `/api/metrics`                                         | bucketed metric time-series                             |
 
 Testing commands for every endpoint live in **`apistest.md`**.
