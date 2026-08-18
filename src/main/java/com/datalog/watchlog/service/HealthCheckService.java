@@ -75,6 +75,7 @@ public class HealthCheckService {
                     return new HealthStatusResponse(
                             service.getServiceId(),
                             latest != null ? latest.getStatus() : ServiceStatus.UNKNOWN,
+                            service.getServiceName(),
                             latest != null ? latest.getTimestamp().toInstant(ZoneOffset.UTC) : null,
                             latest != null ? latest.getResponseTimeMs() : null);
                 })

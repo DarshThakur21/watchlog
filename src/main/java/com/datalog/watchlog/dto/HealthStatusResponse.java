@@ -16,6 +16,7 @@ import java.util.UUID;
 public record HealthStatusResponse(
         UUID serviceId,
         ServiceStatus status,
+        String serviceName,
         Instant lastCheckedAt,
         Long responseTimeMs) {
 }
