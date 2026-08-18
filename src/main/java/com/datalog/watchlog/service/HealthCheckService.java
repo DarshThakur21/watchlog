@@ -15,6 +15,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Periodically probes each registered service's health endpoint, records a
@@ -81,4 +82,22 @@ public class HealthCheckService {
                 })
                 .toList();
     }
+
+    public HealthStatusResponse currentStatusByService(String serviceId) {
+        return servicesRepository.findById(UUID.fromString(serviceId))
+                .map(service -> {
+                    HealthCheckResult latest = healthCheckResultRepository
+                            .findFirstByService_ServiceIdOrderByTimestampDesc(service.getServiceId())
+                            .orElse(null);
+                    return new HealthStatusResponse(
+                            service.getServiceId(),
+                            latest != null ? latest.getStatus() : ServiceStatus.UNKNOWN,
+                            service.getServiceName(),
+                            latest != null ? latest.getTimestamp().toInstant(ZoneOffset.UTC) : null,
+                            latest != null ? latest.getResponseTimeMs() : null);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Service not found: " + serviceId));
+
+    }
+
 }

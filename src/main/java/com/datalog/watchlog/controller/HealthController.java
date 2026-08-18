@@ -4,6 +4,7 @@ import com.datalog.watchlog.dto.HealthStatusResponse;
 import com.datalog.watchlog.service.HealthCheckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,5 +23,10 @@ public class HealthController {
     @GetMapping
     public List<HealthStatusResponse> status() {
         return healthCheckService.currentStatus();
+    }
+
+    @GetMapping("/{serviceId}")
+    public HealthStatusResponse statusByService(@PathVariable String serviceId) {
+        return healthCheckService.currentStatusByService(serviceId);
     }
 }
