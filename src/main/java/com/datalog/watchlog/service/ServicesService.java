@@ -4,11 +4,13 @@ import com.datalog.watchlog.dto.ServiceRequest;
 import com.datalog.watchlog.dto.ServiceResponse;
 import com.datalog.watchlog.model.Projects;
 import com.datalog.watchlog.model.Services;
+import com.datalog.watchlog.repository.HealthCheckResultRepository;
 import com.datalog.watchlog.repository.ProjectRepository;
 import com.datalog.watchlog.repository.ServicesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -24,6 +26,7 @@ public class ServicesService {
 
     private final ServicesRepository servicesRepository;
     private final ProjectRepository projectRepository;
+    private final HealthCheckResultRepository healthCheckResultRepository;
 
     public ServiceResponse create(ServiceRequest request) {
         Projects project = projectRepository.findById(request.projectId())
@@ -65,5 +68,14 @@ public class ServicesService {
                 service.getBaseUrl(),
                 service.getHealthCheckEndpoint(),
                 service.getCreatedAt().toInstant());
+    }
+
+
+    @Transactional
+    public void deleteService(UUID id) {
+        Services service = servicesRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found: " + id));
+        healthCheckResultRepository.deleteByService_ServiceId(id); // Delete associated health checks first
+        servicesRepository.delete(service);
     }
 }

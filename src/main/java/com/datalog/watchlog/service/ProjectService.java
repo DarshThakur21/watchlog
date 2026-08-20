@@ -7,6 +7,7 @@ import com.datalog.watchlog.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -53,5 +54,11 @@ public class ProjectService {
                 project.getProjectName(),
                 project.getProjectDescription(),
                 project.getCreatedAt().toInstant());
+    }
+
+    @Transactional
+    public void deleteProject(UUID projectId) {
+        Projects project=projectRepository.findById(projectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found: " + projectId));
+        projectRepository.delete(project);
     }
 }

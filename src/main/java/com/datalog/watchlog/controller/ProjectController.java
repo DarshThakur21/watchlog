@@ -2,17 +2,13 @@ package com.datalog.watchlog.controller;
 
 import com.datalog.watchlog.dto.ProjectRequest;
 import com.datalog.watchlog.dto.ProjectResponse;
+import com.datalog.watchlog.dto.ServiceResponse;
 import com.datalog.watchlog.service.ProjectService;
+import com.datalog.watchlog.service.ServicesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,5 +37,10 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ProjectResponse get(@PathVariable UUID id) {
         return projectService.get(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteProject(@PathVariable UUID id) {
+        projectService.deleteProject(id);
     }
 }

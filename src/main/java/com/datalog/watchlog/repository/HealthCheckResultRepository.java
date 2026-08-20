@@ -16,4 +16,6 @@ public interface HealthCheckResultRepository extends JpaRepository<HealthCheckRe
             UUID serviceId, LocalDateTime from, LocalDateTime to);
 
     List<HealthCheckResult> findByTimestampAfterOrderByTimestampAsc(LocalDateTime since);
+
+    void deleteByService_ServiceId(UUID id);
 }
