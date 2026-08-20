@@ -3,6 +3,7 @@ package com.datalog.watchlog.dto;
 import com.datalog.watchlog.model.enums.LogLevel;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -19,7 +20,7 @@ import java.util.UUID;
  * @param size      page size (defaults to 20)
  */
 public record LogQueryRequest(
-        UUID serviceId,
+     @RequestParam(name = "serviceId") UUID serviceId,
         LogLevel level,
         Instant from,
         Instant to,

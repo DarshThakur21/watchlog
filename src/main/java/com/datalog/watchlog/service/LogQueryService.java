@@ -15,13 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Read side of the log pipeline: runs a dynamic, filterable search against the
- * {@code application-logs} index and returns a paginated response.
- *
- * <p>Criteria field names are the Elasticsearch document field names (the
- * {@code @Field(name = ...)} values), not the Java property names.
- */
 @Service
 @RequiredArgsConstructor
 public class LogQueryService {
@@ -32,10 +25,11 @@ public class LogQueryService {
         Criteria criteria = new Criteria();
 
         if (request.serviceId() != null) {
-            criteria.and("service_id").is(request.serviceId().toString());
+            // and(String) returns a NEW Criteria — must reassign
+            criteria = criteria.and("service_id").is(request.serviceId().toString());
         }
         if (request.level() != null) {
-            criteria.and("level").is(request.level().name());
+            criteria = criteria.and("level").is(request.level().name());
         }
         if (request.from() != null || request.to() != null) {
             Criteria time = new Criteria("timestamp");
@@ -45,10 +39,11 @@ public class LogQueryService {
             if (request.to() != null) {
                 time.lessThan(request.to());
             }
-            criteria.and(time);
+            // and(Criteria) DOES mutate `this` and return it — this one was fine
+            criteria = criteria.and(time);
         }
         if (request.keyword() != null && !request.keyword().isBlank()) {
-            criteria.and("message").matches(request.keyword().trim());
+            criteria = criteria.and("message").matches(request.keyword().trim());
         }
 
         CriteriaQuery query = new CriteriaQuery(criteria);
