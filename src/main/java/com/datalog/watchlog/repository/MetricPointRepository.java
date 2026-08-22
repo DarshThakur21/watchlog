@@ -2,9 +2,11 @@ package com.datalog.watchlog.repository;
 
 import com.datalog.watchlog.model.MetricPoint;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -37,4 +39,11 @@ public interface MetricPointRepository extends JpaRepository<MetricPoint, Metric
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("bucket") String bucket);
+
+    @Modifying
+    @Query("""
+    DELETE FROM MetricPoint m
+    WHERE m.timestamp < :cutOff
+""")
+    int deleteByTimestampBefore(LocalDateTime cutOff);
 }

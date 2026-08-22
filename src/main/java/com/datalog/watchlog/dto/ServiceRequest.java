@@ -19,5 +19,7 @@ public record ServiceRequest(
         @NotBlank(message = "serviceName is required") String serviceName,
         String baseUrl,
         String healthCheckEndpoint,
-        String apiKey) {
+        String apiKey,
+        UUID serviceId
+) {
 }

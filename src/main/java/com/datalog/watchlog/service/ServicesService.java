@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -32,10 +33,24 @@ public class ServicesService {
         Projects project = projectRepository.findById(request.projectId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Project not found: " + request.projectId()));
-        if (servicesRepository.existsByServiceNameAndProject_ProjectId(request.serviceName(), request.projectId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Service name already exists in project: " + request.serviceName());
+
+
+        if (request.serviceId() != null) {
+
+            Optional<Services> existingService =
+                    servicesRepository.findById(request.serviceId());
+
+            if (existingService.isPresent()) {
+                Services updateService = existingService.get();
+
+                updateService.setBaseUrl(request.baseUrl());
+                updateService.setHealthCheckEndpoint(request.healthCheckEndpoint());
+                updateService.setServiceName(request.serviceName());
+
+                return toResponse(servicesRepository.save(updateService));
+            }
         }
+
 
         Services service = Services.builder()
                 .serviceName(request.serviceName())

@@ -2,6 +2,8 @@ package com.datalog.watchlog.repository;
 
 import com.datalog.watchlog.model.HealthCheckResult;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,4 +20,9 @@ public interface HealthCheckResultRepository extends JpaRepository<HealthCheckRe
     List<HealthCheckResult> findByTimestampAfterOrderByTimestampAsc(LocalDateTime since);
 
     void deleteByService_ServiceId(UUID id);
+
+    @Modifying
+    @Query("DELETE FROM HealthCheckResult h WHERE h.timestamp < :cutoff")
+    int deleteByTimeStampBefore(LocalDateTime cutoff);
 }
+
