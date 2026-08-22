@@ -248,17 +248,17 @@ com.datalog.watchlog
 A `record(String serviceId, String projectId, Instant timestamp, String level, String logger, String thread, String message)` with a `toDocument()` helper that maps straight into a `LogDocument`. IDs are **String** (JSON over Kafka / ES), while JPA uses UUID.
 
 ### DTOs — `dto/`
-| DTO | Fields | Notes |
-|---|---|---|
-| `ProjectRequest` | `projectName (@NotBlank)`, `projectDescription` | description stored as `""` if omitted |
-| `ProjectResponse` | `id (UUID)`, `projectName`, `projectDescription`, `createdAt (Instant)` | |
-| `ServiceRequest` | `projectId (@NotNull UUID)`, `serviceName (@NotBlank)`, `baseUrl`, `healthCheckEndpoint`, `apiKey` | apiKey optional (auto-gen) |
-| `ServiceResponse` | `id`, `projectId`, `serviceName`, `baseUrl`, `healthCheckEndpoint`, `createdAt` | **never echoes apiKey** |
-| `LogIngestRequest` | `serviceId (@NotNull UUID)`, `timestamp (@NotNull Instant)`, `level (@NotNull LogLevel)`, `logger`, `thread`, `message (@NotBlank)` | the appender contract |
-| `LogQueryRequest` | `serviceId`, `level`, `from`, `to`, `keyword`, `page (default0)`, `size (default20)` | compact constructor defaults |
-| `LogQueryResponse` | `logs (List<LogDocument>)`, `totalHits`, `page` | |
-| `HealthStatusResponse` | `serviceId`, `status`, `lastCheckedAt`, `responseTimeMs` | |
-| `MetricQueryResponse` | `serviceId`, `metricName`, `points (List<Point(timestamp, value)>)` | |
+| DTO                    | Fields                                                                                                                              | Notes                                 |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| `ProjectRequest`       | `projectName (@NotBlank)`, `projectDescription`                                                                                     | description stored as `""` if omitted |
+| `ProjectResponse`      | `id (UUID)`, `projectName`, `projectDescription`, `createdAt (Instant)`                                                             |                                       |
+| `ServiceRequest`       | `projectId (@NotNull UUID)`, `serviceName (@NotBlank)`, `baseUrl`, `healthCheckEndpoint`, `apiKey`                                  | apiKey optional (auto-gen)            |
+| `ServiceResponse`      | `id`, `projectId`, `serviceName`, `baseUrl`, `healthCheckEndpoint`, `createdAt`                                                     | **never echoes apiKey**               |
+| `LogIngestRequest`     | `serviceId (@NotNull UUID)`, `timestamp (@NotNull Instant)`, `level (@NotNull LogLevel)`, `logger`, `thread`, `message (@NotBlank)` | the appender contract                 |
+| `LogQueryRequest`      | `serviceId`, `level`, `from`, `to`, `keyword`, `page (default0)`, `size (default20)`                                                | compact constructor defaults          |
+| `LogQueryResponse`     | `logs (List<LogDocument>)`, `totalHits`, `page`                                                                                     |                                       |
+| `HealthStatusResponse` | `serviceId`, `status`, `lastCheckedAt`, `responseTimeMs`                                                                            |                                       |
+| `MetricQueryResponse`  | `serviceId`, `metricName`, `points (List<Point(timestamp, value)>)`                                                                 |                                       |
 
 ---
 
